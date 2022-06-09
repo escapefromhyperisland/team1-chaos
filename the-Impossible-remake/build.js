@@ -2683,6 +2683,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
 
   // game.js
   no({
+    width: window.screen.width,
+    height: window.screen.height,
     background: [2, 83, 115, 0],
     canvas: document.querySelector("#myCanvas"),
     scale: 0.7
@@ -2739,6 +2741,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   var FALL_DEATH = 2400;
   var JUMP_FORCE = 1050;
   var GRAVITY = 4e3;
+  var jumpIndex = 0;
   var LEVELS = [
     [""],
     [
@@ -2800,10 +2803,11 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     height: 100,
     "@": () => [
       sprite("cube", { flipX: true }),
+      move(RIGHT, SPEED),
       z(1e3),
       area({ height: 100, width: 100 }),
       rotate(0),
-      body(),
+      body({ jumpForce: JUMP_FORCE }),
       origin("center"),
       "player"
     ],
@@ -2926,14 +2930,17 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     });
     onKeyPress("space", () => {
       if (player.isGrounded()) {
+        jumpIndex = 0;
+        player.jump();
         player.play("jump");
-        player.jump(JUMP_FORCE);
+      } else if (jumpIndex <= 1) {
+        player.jump();
       }
+      jumpIndex++;
     });
     onKeyDown("space", () => {
+      player.doubleJump();
       if (player.isGrounded()) {
-        player.play("jump");
-        player.jump(JUMP_FORCE);
       }
     });
     function addButton(txt, p, f2) {
