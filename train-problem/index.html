@@ -6843,15 +6843,6 @@ function load_game(gameData, defaultFontData, startWithTitle) {
 	onready(startWithTitle);
 }
 
-function nextLevel() {
-	if (input.anyKeyPressed() || input.isTapReleased()) {
-			/* RESTART GAME */
-			console.log("The End of this level, thanks for playing!");
-			window.parent.postMessage('nextLevel');
-			// reset_cur_game();
-		}
-	}
-
 function reset_cur_game() {
 	if (curGameData == null) {
 		return; //can't reset if we don't have the game data
@@ -6990,8 +6981,10 @@ function updateInput() {
 	}
 	else if (isEnding) {
 		if (!isAnyButtonHeld && isAnyButtonDown()) {
-			/* Next GAME */
-			nextLevel()
+			/* RESTART GAME */
+			console.log("The End of this level, thanks for playing!");
+			window.parent.postMessage('nextLevel');
+			// reset_cur_game();
 		}
 	}
 	else if (!isIgnoringInput) {
