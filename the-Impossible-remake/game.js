@@ -1,6 +1,8 @@
 import kaboom from 'kaboom';
 
 kaboom({
+	width: window.screen.width,
+	height: window.screen.height,
 	background: [2, 83, 115, 0],
 	canvas: document.querySelector('#myCanvas'),
 	scale: 0.7,
@@ -60,9 +62,9 @@ const SPEED = 900;
 const FALL_DEATH = 2400;
 const JUMP_FORCE = 1050;
 const GRAVITY = 4000;
+let jumpIndex = 0;
 // 4 spaces between jumps up
 // 3 spaces on slide down
-
 const LEVELS = [
 	[''],
 	[
@@ -126,11 +128,12 @@ const levelConfig = {
 	// pos: vec2(100, 700),
 	'@': () => [
 		sprite('cube', { flipX: true }),
-		// move(RIGHT, SPEED),
+		move(RIGHT, SPEED),
 		z(1000),
 		area({ height: 100, width: 100 }),
 		rotate(0),
-		body(),
+		body({ jumpForce: JUMP_FORCE }),
+		// spin(),
 		origin('center'),
 		'player',
 	],
@@ -264,17 +267,21 @@ scene('game', ({ levelId, music } = { levelId: 0, music: null }) => {
 
 	onKeyPress('space', () => {
 		if (player.isGrounded()) {
+			jumpIndex = 0;
+			player.jump();
 			player.play('jump');
-			player.jump(JUMP_FORCE);
+		} else if (jumpIndex <= 1) {
+			player.jump();
 		}
+		jumpIndex++;
 	});
 
-	onKeyDown('space', () => {
-		if (player.isGrounded()) {
-			player.play('jump');
-			player.jump(JUMP_FORCE);
-		}
-	});
+	// onKeyDown('space', () => {
+	// 	player.doubleJump();
+	// 	if (player.isGrounded()) {
+	// 		 player.play('jump');
+	// 	}
+	// });
 
 	function addButton(txt, p, f) {
 		const btn = add([
