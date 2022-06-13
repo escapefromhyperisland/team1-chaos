@@ -6843,6 +6843,11 @@ function load_game(gameData, defaultFontData, startWithTitle) {
 	onready(startWithTitle);
 }
 
+function nextLevel() {
+			console.log("The End of this level, thanks for playing!");
+			window.parent.postMessage('nextLevel');
+	}
+
 function reset_cur_game() {
 	if (curGameData == null) {
 		return; //can't reset if we don't have the game data
@@ -6980,11 +6985,9 @@ function updateInput() {
 		}
 	}
 	else if (isEnding) {
-		if (input.anyKeyPressed() || input.isTapReleased()) {
-			/* RESTART GAME */
-			console.log("The End of this level, thanks for playing!");
-			window.parent.postMessage('nextLevel');
-			// reset_cur_game();
+		if (!isAnyButtonHeld && isAnyButtonDown()) {
+			/* Next Level GAME */
+			nextLevel()
 		}
 	}
 	else if (!isIgnoringInput) {
