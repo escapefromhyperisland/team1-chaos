@@ -1,10 +1,10 @@
 import kaboom from 'kaboom';
 
 kaboom({
-	width: window.screen.width,
-	height: window.screen.height,
+	// width: window.screen.width,
+	// height: window.screen.height,
 	background: [2, 83, 115, 0],
-	canvas: document.querySelector('#myCanvas'),
+	// canvas: document.querySelector('#myCanvas'),
 	scale: 0.7,
 });
 // Sprites
@@ -60,7 +60,7 @@ loadSound('theme', './assets/sounds/theme.mp3');
 
 const SPEED = 900;
 const FALL_DEATH = 2400;
-const JUMP_FORCE = 1050;
+const JUMP_FORCE = 1025;
 const GRAVITY = 4000;
 let jumpIndex = 0;
 // 4 spaces between jumps up
@@ -83,7 +83,7 @@ const LEVELS = [
 		'                                                                                                  ==                               ',
 		'                                                                     ^                       ==                                     ',
 		'                                                                     =                  ==                                            ',
-		'@      ###    ^                   ^^     ^              =^^^=              =^      ==',
+		'@          #  ^                   ^^     ^              =^^^=              =^      ==',
 		'---------------------------------------------------------___------------------------__________________________________________________________________________________________________________________________________',
 	],
 	[
@@ -132,7 +132,7 @@ const levelConfig = {
 		z(1000),
 		area({ height: 100, width: 100 }),
 		rotate(0),
-		body({ jumpForce: JUMP_FORCE }),
+		body(),
 		// spin(),
 		origin('center'),
 		'player',
@@ -151,7 +151,7 @@ const levelConfig = {
 		solid(),
 		z(900),
 		origin('center'),
-		'ground',
+		'doubleJumpGround',
 	],
 	'^': () => [
 		sprite('spike'),
@@ -219,7 +219,7 @@ scene('game', ({ levelId, music } = { levelId: 0, music: null }) => {
 	onUpdate('spike', (b) => {
 		b.solid = b.pos.dist(player.pos) <= 64;
 	});
-	onUpdate('floor-level', (b) => {
+	onUpdate('doubleJumpGround', (b) => {
 		b.solid = b.pos.dist(player.pos) <= 64;
 	});
 	onUpdate('danger', (b) => {
@@ -231,11 +231,20 @@ scene('game', ({ levelId, music } = { levelId: 0, music: null }) => {
 	onUpdate('trampolin', (b) => {
 		b.solid = b.pos.dist(player.pos) <= 64;
 	});
+	onUpdate('portal', (b) => {
+		b.solid = b.pos.dist(player.pos) <= 64;
+	});
 
 	player.onCollide('ground', (e, col) => {
 		if (!col.isBottom()) {
 			restartLvl();
 		}
+	});
+	player.onCollide('doubleJumpGround', (e, col) => {
+		window.parent.postMessage('nextLevel');
+		// if (!col.isBottom()) {
+		// 	restartLvl();
+		// }
 	});
 
 	player.onCollide('danger', () => {
@@ -249,6 +258,7 @@ scene('game', ({ levelId, music } = { levelId: 0, music: null }) => {
 	player.onCollide('trampolin', () => {
 		player.jump(JUMP_FORCE * 1.7);
 	});
+
 	player.onCollide('portal', () => {
 		if (levelId < LEVELS.length - 1) {
 			go('game', {
@@ -258,30 +268,31 @@ scene('game', ({ levelId, music } = { levelId: 0, music: null }) => {
 		}
 	});
 
-	onKeyDown('right', () => {
-		player.move(SPEED, 0);
-	});
-	onKeyDown('left', () => {
-		player.move(-SPEED, 0);
-	});
+	// onKeyDown('right', () => {
+	// 	player.move(SPEED, 0);
+	// });
+	// onKeyDown('left', () => {
+	// 	player.move(-SPEED, 0);
+	// });
 
 	onKeyPress('space', () => {
 		if (player.isGrounded()) {
-			jumpIndex = 0;
-			player.jump();
+			// jumpIndex = 1;
+			player.jump(JUMP_FORCE);
 			player.play('jump');
-		} else if (jumpIndex <= 1) {
-			player.jump();
 		}
-		jumpIndex++;
+		// } else if (jumpIndex <= 1) {
+		// 	player.jump();
+		// }
+		// jumpIndex++;
 	});
 
-	// onKeyDown('space', () => {
-	// 	player.doubleJump();
-	// 	if (player.isGrounded()) {
-	// 		 player.play('jump');
-	// 	}
-	// });
+	onKeyDown('space', () => {
+		if (player.isGrounded()) {
+			player.jump(JUMP_FORCE);
+			player.play('jump');
+		}
+	});
 
 	function addButton(txt, p, f) {
 		const btn = add([

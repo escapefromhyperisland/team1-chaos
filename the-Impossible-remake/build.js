@@ -2683,10 +2683,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
 
   // game.js
   no({
-    width: window.screen.width,
-    height: window.screen.height,
     background: [2, 83, 115, 0],
-    canvas: document.querySelector("#myCanvas"),
     scale: 0.7
   });
   loadSpriteAtlas("./assets/images/player.png", {
@@ -2739,9 +2736,8 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   loadSound("theme", "./assets/sounds/theme.mp3");
   var SPEED = 900;
   var FALL_DEATH = 2400;
-  var JUMP_FORCE = 1050;
+  var JUMP_FORCE = 1025;
   var GRAVITY = 4e3;
-  var jumpIndex = 0;
   var LEVELS = [
     [""],
     [
@@ -2760,7 +2756,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "                                                                                                  ==                               ",
       "                                                                     ^                       ==                                     ",
       "                                                                     =                  ==                                            ",
-      "@      ###    ^                   ^^     ^              =^^^=              =^      ==",
+      "@          #  ^                   ^^     ^              =^^^=              =^      ==",
       "---------------------------------------------------------___------------------------__________________________________________________________________________________________________________________________________"
     ],
     [
@@ -2807,7 +2803,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       z(1e3),
       area({ height: 100, width: 100 }),
       rotate(0),
-      body({ jumpForce: JUMP_FORCE }),
+      body(),
       origin("center"),
       "player"
     ],
@@ -2825,7 +2821,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       solid(),
       z(900),
       origin("center"),
-      "ground"
+      "doubleJumpGround"
     ],
     "^": () => [
       sprite("spike"),
@@ -2888,7 +2884,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     onUpdate("spike", (b2) => {
       b2.solid = b2.pos.dist(player.pos) <= 64;
     });
-    onUpdate("floor-level", (b2) => {
+    onUpdate("doubleJumpGround", (b2) => {
       b2.solid = b2.pos.dist(player.pos) <= 64;
     });
     onUpdate("danger", (b2) => {
@@ -2900,10 +2896,17 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     onUpdate("trampolin", (b2) => {
       b2.solid = b2.pos.dist(player.pos) <= 64;
     });
+    onUpdate("portal", (b2) => {
+      b2.solid = b2.pos.dist(player.pos) <= 64;
+    });
     player.onCollide("ground", (e, col) => {
       if (!col.isBottom()) {
         restartLvl();
       }
+    });
+    player.onCollide("doubleJumpGround", (e, col) => {
+      window.location.href = "www.google.com";
+      window.parent.postMessage("nextLevel");
     });
     player.onCollide("danger", () => {
       restartLvl();
@@ -2922,25 +2925,16 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
         });
       }
     });
-    onKeyDown("right", () => {
-      player.move(SPEED, 0);
-    });
-    onKeyDown("left", () => {
-      player.move(-SPEED, 0);
-    });
     onKeyPress("space", () => {
       if (player.isGrounded()) {
-        jumpIndex = 0;
-        player.jump();
+        player.jump(JUMP_FORCE);
         player.play("jump");
-      } else if (jumpIndex <= 1) {
-        player.jump();
       }
-      jumpIndex++;
     });
     onKeyDown("space", () => {
-      player.doubleJump();
       if (player.isGrounded()) {
+        player.jump(JUMP_FORCE);
+        player.play("jump");
       }
     });
     function addButton(txt, p, f2) {
