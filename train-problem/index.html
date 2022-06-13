@@ -6982,7 +6982,9 @@ function updateInput() {
 	else if (isEnding) {
 		if (!isAnyButtonHeld && isAnyButtonDown()) {
 			/* RESTART GAME */
-			reset_cur_game();
+			console.log("The End of this level, thanks for playing!");
+			window.parent.postMessage('nextLevel');
+			// reset_cur_game();
 		}
 	}
 	else if (!isIgnoringInput) {
