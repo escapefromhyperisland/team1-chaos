@@ -6980,7 +6980,7 @@ function updateInput() {
 		}
 	}
 	else if (isEnding) {
-		if (!isAnyButtonHeld && isAnyButtonDown()) {
+		if (input.anyKeyPressed() || input.isTapReleased()) {
 			/* RESTART GAME */
 			console.log("The End of this level, thanks for playing!");
 			window.parent.postMessage('nextLevel');
