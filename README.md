@@ -41,7 +41,7 @@ _"INSERT STORY"_
 <br />
 <br />
 **😈 Enjoy the chaos!! Play here:**
-https://escapefromhyperisland.github.io/game/?world=1
+https://escapefromhyperisland.github.io/?world=1
 
 Please have a look in our folders if you want to read more about each level!
 <br />
