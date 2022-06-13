@@ -6843,9 +6843,13 @@ function load_game(gameData, defaultFontData, startWithTitle) {
 	onready(startWithTitle);
 }
 
-function nextLevel() {
+function nextLevel() {git p
+	if (input.anyKeyPressed() || input.isTapReleased()) {
+			/* RESTART GAME */
 			console.log("The End of this level, thanks for playing!");
 			window.parent.postMessage('nextLevel');
+			// reset_cur_game();
+		}
 	}
 
 function reset_cur_game() {
@@ -6986,7 +6990,7 @@ function updateInput() {
 	}
 	else if (isEnding) {
 		if (!isAnyButtonHeld && isAnyButtonDown()) {
-			/* Next Level GAME */
+			/* Next GAME */
 			nextLevel()
 		}
 	}
