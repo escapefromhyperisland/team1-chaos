@@ -36,6 +36,19 @@ loadSpriteAtlas('./assets/images/portal.png', {
 		},
 	},
 });
+loadSpriteAtlas('./assets/images/end-portal.png', {
+	endPortal: {
+		x: 0,
+		y: 0,
+		sliceX: 11,
+		sliceY: 1,
+		height: 100,
+		width: 1100,
+		anims: {
+			idle: { from: 0, to: 10, loop: true },
+		},
+	},
+});
 loadSpriteAtlas('./assets/images/trampolin.png', {
 	trampolin: {
 		x: 0,
@@ -60,7 +73,7 @@ loadSound('theme', './assets/sounds/theme.mp3');
 
 const SPEED = 900;
 const FALL_DEATH = 2400;
-const JUMP_FORCE = 1025;
+const JUMP_FORCE = 1050;
 const GRAVITY = 4000;
 let jumpIndex = 0;
 // 4 spaces between jumps up
@@ -83,7 +96,7 @@ const LEVELS = [
 		'                                                                                                  ==                               ',
 		'                                                                     ^                       ==                                     ',
 		'                                                                     =                  ==                                            ',
-		'@          #  ^                   ^^     ^              =^^^=              =^      ==',
+		'@             ^                   ^^     ^              =^^^=              =^      ==',
 		'---------------------------------------------------------___------------------------__________________________________________________________________________________________________________________________________',
 	],
 	[
@@ -117,10 +130,7 @@ const LEVELS = [
 		'                    o^^^^^           o                                  =      =      =             =====================================================================================',
 		'_____________-------------------------                            -----',
 	],
-	[
-		'@                   #',
-		'--------------------------------------------------------------------------------------------',
-	],
+	['@                   #', '---------------------'],
 ];
 const levelConfig = {
 	width: 100,
@@ -146,12 +156,11 @@ const levelConfig = {
 		'ground',
 	],
 	'#': () => [
-		sprite('floor-level2'),
-		area({ height: 75 }),
-		solid(),
-		z(900),
-		origin('center'),
-		'doubleJumpGround',
+		sprite('endPortal', { anim: 'idle' }),
+		area(scale(0.2, 1)),
+		scale(3),
+		origin('bot'),
+		'endPortal',
 	],
 	'^': () => [
 		sprite('spike'),
@@ -234,17 +243,24 @@ scene('game', ({ levelId, music } = { levelId: 0, music: null }) => {
 	onUpdate('portal', (b) => {
 		b.solid = b.pos.dist(player.pos) <= 64;
 	});
+	onUpdate('endPortal', (b) => {
+		b.solid = b.pos.dist(player.pos) <= 64;
+	});
 
 	player.onCollide('ground', (e, col) => {
 		if (!col.isBottom()) {
 			restartLvl();
 		}
 	});
-	player.onCollide('doubleJumpGround', (e, col) => {
-		window.parent.postMessage('nextLevel');
-		// if (!col.isBottom()) {
-		// 	restartLvl();
-		// }
+	// player.onCollide('doubleJumpGround', (e, col) => {
+	// 	window.parent.postMessage('nextLevel');
+	// 	// if (!col.isBottom()) {
+	// 	// 	restartLvl();
+	// 	// }
+	// });
+
+	player.onCollide('endPortal', () => {
+		go('win');
 	});
 
 	player.onCollide('danger', () => {
@@ -342,3 +358,30 @@ scene('game', ({ levelId, music } = { levelId: 0, music: null }) => {
 });
 
 go('game');
+
+scene('win', () => {
+	addButton('You Win, click here to continue :)', vec2(100, 100), () => {
+		window.parent.postMessage('nextLevel');
+	});
+	function addButton(txt, p, f) {
+		const btn = add([
+			text(txt),
+			area({ cursor: 'pointer' }),
+			pos(p),
+			scale(1),
+			origin('topleft'),
+			fixed(),
+		]);
+
+		btn.onClick(f);
+
+		btn.onUpdate(() => {
+			if (btn.isHovering()) {
+				btn.scale = vec2(1.2);
+			} else {
+				btn.scale = vec2(1);
+				btn.color = rgb();
+			}
+		});
+	}
+});
