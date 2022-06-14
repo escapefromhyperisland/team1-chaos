@@ -2714,6 +2714,19 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       }
     }
   });
+  loadSpriteAtlas("./assets/images/end-portal.png", {
+    endPortal: {
+      x: 0,
+      y: 0,
+      sliceX: 11,
+      sliceY: 1,
+      height: 100,
+      width: 1100,
+      anims: {
+        idle: { from: 0, to: 10, loop: true }
+      }
+    }
+  });
   loadSpriteAtlas("./assets/images/trampolin.png", {
     trampolin: {
       x: 0,
@@ -2736,7 +2749,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
   loadSound("theme", "./assets/sounds/theme.mp3");
   var SPEED = 900;
   var FALL_DEATH = 2400;
-  var JUMP_FORCE = 1025;
+  var JUMP_FORCE = 1050;
   var GRAVITY = 4e3;
   var LEVELS = [
     [""],
@@ -2756,7 +2769,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "                                                                                                  ==                               ",
       "                                                                     ^                       ==                                     ",
       "                                                                     =                  ==                                            ",
-      "@          #  ^                   ^^     ^              =^^^=              =^      ==",
+      "@             ^                   ^^     ^              =^^^=              =^      ==",
       "---------------------------------------------------------___------------------------__________________________________________________________________________________________________________________________________"
     ],
     [
@@ -2789,10 +2802,7 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "                    o^^^^^           o                                  =      =      =             =====================================================================================",
       "_____________-------------------------                            -----"
     ],
-    [
-      "@                   #",
-      "--------------------------------------------------------------------------------------------"
-    ]
+    ["@                   #", "---------------------"]
   ];
   var levelConfig = {
     width: 100,
@@ -2816,12 +2826,11 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
       "ground"
     ],
     "#": () => [
-      sprite("floor-level2"),
-      area({ height: 75 }),
-      solid(),
-      z(900),
-      origin("center"),
-      "doubleJumpGround"
+      sprite("endPortal", { anim: "idle" }),
+      area(scale(0.2, 1)),
+      scale(3),
+      origin("bot"),
+      "endPortal"
     ],
     "^": () => [
       sprite("spike"),
@@ -2899,14 +2908,16 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     onUpdate("portal", (b2) => {
       b2.solid = b2.pos.dist(player.pos) <= 64;
     });
+    onUpdate("endPortal", (b2) => {
+      b2.solid = b2.pos.dist(player.pos) <= 64;
+    });
     player.onCollide("ground", (e, col) => {
       if (!col.isBottom()) {
         restartLvl();
       }
     });
-    player.onCollide("doubleJumpGround", (e, col) => {
-      window.location.href = "www.google.com";
-      window.parent.postMessage("nextLevel");
+    player.onCollide("endPortal", () => {
+      go("win");
     });
     player.onCollide("danger", () => {
       restartLvl();
@@ -2981,4 +2992,28 @@ vec4 frag(vec3 pos, vec2 uv, vec4 color, sampler2D tex) {
     }
   });
   go("game");
+  scene("win", () => {
+    addButton("You Win, click here to continue :)", vec2(100, 100), () => {
+      window.parent.postMessage("nextLevel");
+    });
+    function addButton(txt, p, f2) {
+      const btn = add([
+        text(txt),
+        area({ cursor: "pointer" }),
+        pos(p),
+        scale(1),
+        origin("topleft"),
+        fixed()
+      ]);
+      btn.onClick(f2);
+      btn.onUpdate(() => {
+        if (btn.isHovering()) {
+          btn.scale = vec2(1.2);
+        } else {
+          btn.scale = vec2(1);
+          btn.color = rgb();
+        }
+      });
+    }
+  });
 })();
