@@ -8,13 +8,16 @@ AFRAME.registerComponent("core", {
     this.nitro = 0;
     this.bonusNitro = 0;
     this.letterCounter = 0;
+    // this.playerWon = false;
 
     this.playerElement = document.querySelector("a-entity[player]");
 
     document
       .querySelector("a-entity[collider-check]")
       .addEventListener("addBonusNitro", () => {
-        this.bonusNitro += 0.01;
+        this.bonusNitro += 0.008;
+        // faster
+        // this.bonusNitro += 0.01;
       });
 
     this.louderShown = false;
@@ -103,20 +106,23 @@ AFRAME.registerComponent("core", {
       startEvents: "showWinText",
     });
 
-    this.winTextEl.setAttribute("animation__win__fadeout", {
-      property: "text.opacity",
-      from: 1,
-      to: 0,
-      startEvents: "showWinText",
-      delay: 3000,
-    });
+    // this.winTextEl.setAttribute("animation__win__fadeout", {
+    //   property: "text.opacity",
+    //   from: 1,
+    //   to: 0,
+    //   startEvents: "showWinText",
+    //   delay: 3000,
+    // });
   },
 
   tick: function (time) {
     const displayedShields = this.playerElement.components.player.shields;
 
-    // const speed = time * 0.0000001 + 0.01 + this.nitro;
-    const speed = time * 0.0000002 + 0.04 + this.nitro + this.bonusNitro;
+    // const speed = time * 0.0000001 + 0.01 + this.nitro + this.bonusNitro;
+    const speed = time * 0.0000001 + 0.03 + this.nitro + this.bonusNitro;
+
+    // faster from the start
+    // const speed = time * 0.0000002 + 0.04 + this.nitro + this.bonusNitro;
     this.el.emit("updateTimeState", {
       time,
       speed,
@@ -161,8 +167,18 @@ AFRAME.registerComponent("core", {
 
     if (counter === 5 && !this.winShown) {
       this.winShown = true;
+
+      this.el.emit("playerWon");
+
       console.log("win", counter);
       this.winTextEl.emit("showWinText", null, false);
+    }
+
+    if (this.winShown === true) {
+      this.playerElement.object3D.position.setZ(
+        this.playerElement.object3D.position.z - 0.5
+      );
+      console.log("pos Z", this.playerElement.object3D.position.z);
     }
   },
 });
