@@ -5,20 +5,28 @@ body {
 }
 
 .statusBar {
+  z-index: 1;
+  position: relative;
   display: flex;
   flex-direction: row;
   gap: 100px;
   align-items: center;
   justify-content: center;
+  padding-top: 32px;
 }
 
 .statusBarText {
   text-transform: uppercase;
-  z-index: 1;
-  position: relative;
   min-width: 175px;
   font-size: 20px;
   letter-spacing: 2px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.collectedLetter {
+  color: #364d4a;
 }
 
 #speed {
@@ -34,14 +42,21 @@ body {
   min-width: 230px;
 }
 
-.button-connect {
-  z-index: 1;
-  position: relative;
-  background-color: transparent;
-  color: turquoise;
-  border: 1px solid turquoise;
-  border-radius: 3px;
-  margin: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
+.soundLevel {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.soundIndicator {
+  border-radius: 50%;
+  background-color: #491c49;
+  width: 20px;
+  height: 20px;
+  border: 1px solid #921a92;
+}
+
+.soundIndicator.lightedUp {
+  background-color: #ff23ff;
+  box-shadow: 0 0 10pt 2pt #ff5ef6;
 }

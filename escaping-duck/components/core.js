@@ -1,23 +1,24 @@
 AFRAME.registerComponent("core", {
   init: function () {
     this.magnitude = 0;
-    this.averageVolumeReached = false;
-    this.maxVolumeReached = false;
-    this.time = 0;
     this.speed = 0;
-    this.nitro = 0;
-    this.bonusNitro = 0;
     this.letterCounter = 0;
-    // this.playerWon = false;
+
+    this.nitros = {
+      screamNitro: 0,
+      bonusNitro: 0,
+    };
 
     this.playerElement = document.querySelector("a-entity[player]");
 
     document
       .querySelector("a-entity[collider-check]")
       .addEventListener("addBonusNitro", () => {
-        this.bonusNitro += 0.008;
-        // faster
-        // this.bonusNitro += 0.01;
+        AFRAME.ANIME({
+          targets: this.nitros,
+          bonusNitro: this.nitros.bonusNitro + 0.01,
+          easing: "cubicBezier(0.180, 0.070, 0.000, 1.000)",
+        });
       });
 
     this.louderShown = false;
@@ -26,44 +27,61 @@ AFRAME.registerComponent("core", {
 
     this.speedElement = document.getElementById("speed");
     this.shieldsElement = document.getElementById("shields");
-    document
-      .querySelector(".button-connect")
-      .addEventListener("click", async () => {
-        const usbVendorId = 0x239a;
-        navigator.serial
-          .requestPort({ filters: [{ usbVendorId }] })
-          .then(async (port) => {
-            await port.open({ baudRate: 9600 });
-            console.log(port, port.readable);
 
-            while (port.readable) {
-              const reader = port.readable.getReader();
-              try {
-                while (true) {
-                  const { value, done } = await reader.read();
-                  if (done) {
-                    console.error("Reader has been canceled");
-                    break;
-                  }
-                  if (value.length === 5) {
-                    const view = new DataView(value.buffer, 0);
-                    const magnitude = view.getFloat32(0, true);
+    const lightUpIndicator = (micVolume) => {
+      const allIndicators = [...document.querySelectorAll(".soundIndicator")];
+      const numberOfIndicatorsToLight = Math.round(micVolume / 15);
+      const indicatorsToLight = allIndicators.slice(
+        0,
+        numberOfIndicatorsToLight
+      );
 
-                    console.log(magnitude);
-                    this.magnitude = magnitude;
-                  }
-                }
-              } catch (error) {
-                console.error(error);
-              } finally {
-                reader.releaseLock();
-              }
-            }
-          })
-          .catch((err) => {
-            console.error("Port is not selected", err);
-          });
-      });
+      for (const indicator of allIndicators) {
+        indicator.classList.remove("lightedUp");
+      }
+
+      for (const indicator of indicatorsToLight) {
+        indicator.classList.add("lightedUp");
+      }
+    };
+
+    (async () => {
+      let volumeCallback = null;
+      let volumeInterval = null;
+
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+          },
+        });
+        const audioContext = new AudioContext();
+        const audioSource = audioContext.createMediaStreamSource(audioStream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512;
+        analyser.minDecibels = -127;
+        analyser.maxDecibels = 0;
+        analyser.smoothingTimeConstant = 0.4;
+        audioSource.connect(analyser);
+        const volumes = new Uint8Array(analyser.frequencyBinCount);
+        volumeCallback = () => {
+          analyser.getByteFrequencyData(volumes);
+          let volumeSum = 0;
+          for (const volume of volumes) {
+            volumeSum += volume;
+          }
+          const averageMicVolume = volumeSum / volumes.length;
+          // max measured averageMicVolume so far is 160
+          this.magnitude = averageMicVolume;
+          lightUpIndicator(averageMicVolume);
+        };
+      } catch (error) {
+        console.log(error);
+      }
+      if (volumeCallback !== null && volumeInterval === null) {
+        volumeInterval = setInterval(volumeCallback, 100);
+      }
+    })();
 
     this.louderTextEl = document.getElementById("louderText");
     this.yeahTextEl = document.getElementById("yeahText");
@@ -81,7 +99,7 @@ AFRAME.registerComponent("core", {
       from: 1,
       to: 0,
       startEvents: "showLouderText",
-      delay: 3000,
+      delay: 1000,
     });
 
     this.yeahTextEl.setAttribute("animation__yeah__fadein", {
@@ -105,28 +123,20 @@ AFRAME.registerComponent("core", {
       to: 1,
       startEvents: "showWinText",
     });
-
-    // this.winTextEl.setAttribute("animation__win__fadeout", {
-    //   property: "text.opacity",
-    //   from: 1,
-    //   to: 0,
-    //   startEvents: "showWinText",
-    //   delay: 3000,
-    // });
   },
 
-  tick: function (time) {
+  tick: function (time, timeDelta) {
     const displayedShields = this.playerElement.components.player.shields;
 
-    // const speed = time * 0.0000001 + 0.01 + this.nitro + this.bonusNitro;
-    const speed = time * 0.0000001 + 0.03 + this.nitro + this.bonusNitro;
+    const speed =
+      0.04 +
+      time * 0.0000002 +
+      this.nitros.screamNitro +
+      this.nitros.bonusNitro;
 
-    // faster from the start
-    // const speed = time * 0.0000002 + 0.04 + this.nitro + this.bonusNitro;
     this.el.emit("updateTimeState", {
-      time,
+      timeDelta,
       speed,
-      nitro: this.nitro,
     });
 
     const displayedSpeed = Math.round(speed * 10000 - 100);
@@ -139,46 +149,52 @@ AFRAME.registerComponent("core", {
       this.shieldsElement.innerHTML = "shields gone";
     }
 
-    const averageVolume = 1000;
-    const maxVolume = 2000;
+    const averageVolume = 100;
+    const maxVolume = 120;
 
-    if (this.magnitude > averageVolume) {
-      this.averageVolumeReached = true;
-    }
+    // showing louderText and yeahText, and increasing speed only after the screamText is shown
+    setTimeout(() => {
+      if (this.magnitude > averageVolume && !this.louderShown) {
+        this.louderShown = true;
+        setTimeout(() => {
+          if (!this.yeahShown) {
+            this.louderTextEl.emit("showLouderText", null, false);
+          }
+        }, 500);
+      }
 
-    if (this.magnitude > maxVolume) {
-      this.maxVolumeReached = true;
-    }
-
-    if (this.averageVolumeReached && !this.louderShown) {
-      console.log("louder");
-      this.louderShown = true;
-      this.louderTextEl.emit("showLouderText", null, false);
-    }
-
-    if (this.maxVolumeReached && !this.yeahShown) {
-      this.yeahShown = true;
-      console.log("yeah!");
-      this.nitro = 0.05;
-      this.yeahTextEl.emit("showYeahText", null, false);
-    }
+      if (this.magnitude > maxVolume && !this.yeahShown) {
+        this.yeahShown = true;
+        AFRAME.ANIME({
+          targets: this.nitros,
+          bonusNitro: this.nitros.screamNitro + 0.05,
+          easing: "cubicBezier(0.180, 0.070, 0.000, 2.000)",
+        });
+        this.yeahTextEl.emit("showYeahText", null, false);
+      }
+    }, 21000);
 
     const counter = this.letterCounter;
 
     if (counter === 5 && !this.winShown) {
       this.winShown = true;
-
       this.el.emit("playerWon");
-
-      console.log("win", counter);
       this.winTextEl.emit("showWinText", null, false);
     }
 
+    // Sending the player to the horizon in win case, player can't accelerate after that
     if (this.winShown === true) {
+      this.louderShown = true;
+      this.yeahShown = true;
       this.playerElement.object3D.position.setZ(
         this.playerElement.object3D.position.z - 0.5
       );
-      console.log("pos Z", this.playerElement.object3D.position.z);
+    }
+
+    // The player can't accelerate after death
+    if (this.playerElement.components.player.shields < 0) {
+      this.louderShown = true;
+      this.yeahShown = true;
     }
   },
 });
