@@ -11,9 +11,9 @@
       const play = () => {
         window.removeEventListener("click", play);
         window.removeEventListener("touchstart", play);
-        document.querySelectorAll("video, audio").forEach((el) => el.play());
+        document.querySelectorAll("#music").forEach((el) => el.play());
         document
-          .querySelectorAll("[sound],a-sound")
+          .querySelectorAll("#musicSound")
           .forEach((el) => el.components.sound.playSound());
       };
       window.addEventListener("click", play);
@@ -28,64 +28,159 @@
     />
   </head>
   <body>
-    <button class="button-connect">Connect ⚡️</button>
     <div class="statusBar">
       <div id="speed" class="statusBarText"></div>
       <div id="shields" class="statusBarText"></div>
-      <div id="hyper" class="statusBarText">collected letters:</div>
+      <div id="hyper" class="statusBarText">
+        <div>collect:</div>
+        <div id="h" class="collectedLetter">h</div>
+        <div id="y" class="collectedLetter">y</div>
+        <div id="p" class="collectedLetter">p</div>
+        <div id="e" class="collectedLetter">e</div>
+        <div id="r" class="collectedLetter">r</div>
+      </div>
+      <div class="soundLevel">
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+        <div class="soundIndicator"></div>
+      </div>
     </div>
     <a-scene
-      id="scene-game"
+      id="sceneGame"
       vr-mode-ui="false"
       fog="type: linear; color: black; near: 200; far: 250"
       background="color: black"
     >
-      <a-entity core></a-entity>
-      <a-entity obstacles></a-entity>
       <a-assets>
         <audio
           id="music"
           src="assets/sounds/horizon.mp3"
           autoplay
           loop
-          preload
+          preload="auto"
           crossorigin="anonymous"
         ></audio>
         <a-asset-item id="duck" src="assets/models/duck.obj"></a-asset-item>
         <a-asset-item
-          id="duck-wire"
+          id="duckWire"
           src="assets/models/duck_wireframe.obj"
         ></a-asset-item>
-        <img id="team-img" src="assets/images/team.png" />
-        <img id="trust-img" src="assets/images/trust.png" />
-        <img id="assessment-img" src="assets/images/assessment.png" />
-        <img id="project-img" src="assets/images/project.png" />
+        <img id="teamImg" src="assets/images/team.png" />
+        <img id="trustImg" src="assets/images/trust.png" />
+        <img id="assessmentImg" src="assets/images/assessment.png" />
+        <img id="projectImg" src="assets/images/project.png" />
+        <img id="letterH" src="assets/images/letter-h.png" />
+        <img id="letterY" src="assets/images/letter-y.png" />
+        <img id="letterP" src="assets/images/letter-p.png" />
+        <img id="letterE" src="assets/images/letter-e.png" />
+        <img id="letterR" src="assets/images/letter-r.png" />
       </a-assets>
+      <a-entity core></a-entity>
+      <a-entity obstacles></a-entity>
       <a-entity camera position="0 15 50"></a-entity>
-      <a-sound src="#music"></a-sound>
+      <a-sound src="#music" id="musicSound"></a-sound>
+      <a-entity
+        sound="src: url(assets/sounds/game-over.mp3); poolSize: 4; volume: 40"
+        id="gameOverSound"
+      ></a-entity>
       <a-entity moving-grid position="0 0 -60"></a-entity>
       <a-entity
         player
         collider-check
         position="0 0.5 30"
         aabb-collider="objects: .collidable"
+        scale="4 4 4"
       >
+        <a-obj-model
+          id="duckInside"
+          src="#duck"
+          material="shader: phong; color: #CC017E"
+        ></a-obj-model>
+        <a-obj-model
+          id="duckOutside"
+          src="#duckWire"
+          material="shader: phong; color: #0000CC"
+        ></a-obj-model>
         <a-entity
-          scale="4 4 4"
-          animation="property: rotation; dir: normal; dur: 1500; loop: true; easing: linear; to: 0 360 0;"
-        >
-          <a-obj-model
-            id="duck-inside"
-            src="#duck"
-            material="shader: phong; color: #CC017E"
-          ></a-obj-model>
-          <a-obj-model
-            id="duck-outside"
-            src="#duck-wire"
-            material="shader: phong; color: #0000CC"
-          ></a-obj-model>
-        </a-entity>
+          sound="src: url(assets/sounds/hit.mp3); poolSize: 4; volume: 20"
+          id="impactSound"
+        ></a-entity>
+        <a-entity
+          sound="src: url(assets/sounds/quack.mp3); poolSize: 4; volume: 20"
+          id="collectSound"
+        ></a-entity>
+        <a-entity
+          sound="src: url(assets/sounds/bonus.mp3); poolSize: 4; volume: 15"
+          id="bonusSound"
+        ></a-entity>
       </a-entity>
+      <a-text
+        id="startText"
+        value="Do you want to escape from Hyper Island?"
+        position="0 20 40"
+        scale="4 4 4"
+        color="#ff41bf"
+        align="center"
+        font="assets/fonts/Electrolize-Regular-msdf.json"
+        font-image="assets/fonts/Electrolize-Regular.png"
+        negate="false"
+        opacity="0"
+        animation__fadein="property: text.opacity; from: 0; to: 1; delay: 2000"
+        animation__fadeout="property: text.opacity; from: 1; to: 0; delay: 5000"
+      >
+      </a-text>
+      <a-text
+        id="collectText"
+        value="Collect letters to escape"
+        position="0 20 40"
+        scale="4 4 4"
+        color="turquoise"
+        align="center"
+        font="assets/fonts/Electrolize-Regular-msdf.json"
+        font-image="assets/fonts/Electrolize-Regular.png"
+        negate="false"
+        opacity="0"
+        animation__fadein="property: text.opacity; from: 0; to: 1; delay: 6000"
+        animation__fadeout="property: text.opacity; from: 1; to: 0; delay: 12000"
+      >
+      </a-text>
+      <a-text
+        id="avoidText"
+        value="Avoid obstacles"
+        position="0 19 40"
+        scale="4 4 4"
+        color="#ff41bf"
+        align="center"
+        font="assets/fonts/Electrolize-Regular-msdf.json"
+        font-image="assets/fonts/Electrolize-Regular.png"
+        negate="false"
+        opacity="0"
+        animation__fadein="property: text.opacity; from: 0; to: 1; delay: 7500"
+        animation__fadeout="property: text.opacity; from: 1; to: 0; delay: 12000"
+      >
+      </a-text>
+      <a-text
+        id="bonusesText"
+        value="Yellow bonuses increase speed"
+        position="0 18 40"
+        scale="4 4 4"
+        color="#fbff12"
+        align="center"
+        font="assets/fonts/Electrolize-Regular-msdf.json"
+        font-image="assets/fonts/Electrolize-Regular.png"
+        negate="false"
+        opacity="0"
+        animation__fadein="property: text.opacity; from: 0; to: 1; delay: 9000"
+        animation__fadeout="property: text.opacity; from: 1; to: 0; delay: 12000"
+      >
+      </a-text>
       <a-text
         id="screamText"
         value="Scream if you wanna go faster"
@@ -97,8 +192,8 @@
         font-image="assets/fonts/Electrolize-Regular.png"
         negate="false"
         opacity="0"
-        animation__fadein="property: text.opacity; from: 0; to: 1; delay: 5000"
-        animation__fadeout="property: text.opacity; from: 1; to: 0; delay: 8000"
+        animation__fadein="property: text.opacity; from: 0; to: 1; delay: 20000"
+        animation__fadeout="property: text.opacity; from: 1; to: 0; delay: 23000"
       >
       </a-text>
       <a-text
@@ -129,7 +224,20 @@
       </a-text>
       <a-text
         id="winText"
-        value="You escaped!"
+        value="Oh no, you escaped! Or checked out?.."
+        position="0 20 40"
+        scale="4 4 4"
+        color="#ff41bf"
+        align="center"
+        font="assets/fonts/Electrolize-Regular-msdf.json"
+        font-image="assets/fonts/Electrolize-Regular.png"
+        negate="false"
+        opacity="0"
+      >
+      </a-text>
+      <a-text
+        id="loseText"
+        value="Sorry, you died! Refresh to restart."
         position="0 20 40"
         scale="4 4 4"
         color="#ff41bf"

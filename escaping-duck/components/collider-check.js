@@ -2,14 +2,16 @@ AFRAME.registerComponent("collider-check", {
   init: function () {
     this.playerElement = document.querySelector("a-entity[player]");
     this.coreElement = document.querySelector("a-entity[core]");
-    this.hyperElement = document.querySelector("#hyper");
+    this.impactSound = document.querySelector("#impactSound");
+    this.collectSound = document.querySelector("#collectSound");
+    this.bonusSound = document.querySelector("#bonusSound");
 
     const collectedHyper = {
-      H: false,
-      Y: false,
-      P: false,
-      E: false,
-      R: false,
+      h: false,
+      y: false,
+      p: false,
+      e: false,
+      r: false,
     };
 
     this.playerElement.addEventListener("hitstart", () => {
@@ -18,28 +20,26 @@ AFRAME.registerComponent("collider-check", {
           .classList[1];
 
       if (entityClass === "obstacle") {
-        console.log("hit");
         this.playerElement.components.player.shields--;
+        this.impactSound.components.sound.playSound();
       }
 
       if (entityClass === "bonus") {
-        console.log("bonus!");
         this.playerElement.emit("addBonusNitro");
+        this.bonusSound.components.sound.playSound();
       }
 
       if (entityClass === "letter") {
         const collectedLetter =
-          this.playerElement.components[
-            "aabb-collider"
-          ].objectEls[0].getAttribute("value");
-        // console.log("letter collected", collectedLetter);
+          this.playerElement.components["aabb-collider"].objectEls[0]
+            .classList[2];
         if (!collectedHyper[collectedLetter]) {
           collectedHyper[collectedLetter] = true;
           this.coreElement.components.core.letterCounter++;
-          this.hyperElement.innerText += ` ${collectedLetter}`;
-          // console.log(this.coreElement.components.core.letterCounter);
+          this.letter = document.querySelector(`#${collectedLetter}`);
+          this.letter.style.color = "turquoise";
         }
-        // console.log(collectedHyper);
+        this.collectSound.components.sound.playSound();
       }
     });
   },
